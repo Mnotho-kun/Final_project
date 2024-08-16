@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Current Traffic</title>
+    <style>
+        #map {
+            height: 500px;
+            width: 100%;
+        }
+        .location-info-container {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <img src="Logo.png" alt="Logo" class="logo">
+                <li><a href="/home-page">Home</a></li>
+                <li><a href="/about-us">About Us</a></li>
+                <li><a href="/contact-us">Contact Us</a></li>
+                <li><a href="/destination">Destination</a></li>
+                <li><a href="/current-traffic">Current Traffic</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="content">
+            <h1>Current Traffic Information</h1>
+            <button id="get-traffic-info">Get Current Traffic</button>
+            <div id="map"></div>
+            <div id="location-info" class="location-info-container"></div>
+        </div>
+    </main>
+    <footer>
+        Available on:
+        <a href="#"><img src="google-play-badge.webp" alt="Google Play" class="store-badge"></a>
+        <a href="#"><img src="App-Store-badge.png" alt="App Store" class="store-badge"></a>
+    </footer>
+
+    <!-- Load Google Maps JavaScript API with the correct libraries and async attribute -->
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap&libraries=places&v=beta">
+</script>
+
+    <script>
+        let map;
+
+        async function initMap() {
+            const position = { lat: -25.344, lng: 131.031 };
+
+            // Initialize the map
+            const { Map } = await google.maps.importLibrary("maps");
+
+            map = new Map(document.getElementById("map"), {
+                zoom: 10,
+                center: position,
+            });
+
+            // Add the Traffic Layer
+            const trafficLayer = new google.maps.TrafficLayer();
+            trafficLayer.setMap(map);
+        }
+
+        document.getElementById('get-traffic-info').addEventListener('click', function() {
+            document.getElementById('location-info').style.display = 'block'; // Show the container
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+
+                    // Center the map on the user's location
+                    map.setCenter({ lat, lng });
+                    map.setZoom(14);
+
+                    // Add a marker at the user's location
+                    new google.maps.Marker({
+                        map: map,
+                        position: { lat, lng },
+                        title: 'You are here',
+                    });
+
+                    // Use Nominatim for reverse geocoding or Google Geocoding API
+                    const geocodingUrl = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`;
+
+                    fetch(geocodingUrl)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.address) {
+                                const locationName = data.display_name || 'your location';
+                                const trafficUpdate = `You are currently at ${locationName}. Traffic conditions are displayed on the map.`;
+
+                                // Speak the traffic update
+                                const utterance = new SpeechSynthesisUtterance(trafficUpdate);
+                                utterance.lang = 'en-US';
+
+                                // Get available voices and set a female voice
+                                const voices = window.speechSynthesis.getVoices();
+                                const femaleVoice = voices.find(voice => voice.name.includes('Female')) || voices[0]; // Fallback to first available voice
+
+                                utterance.voice = femaleVoice;
+                                window.speechSynthesis.speak(utterance);
+
+                                // Show map and location info
+                                document.getElementById('map').style.display = 'block';
+                                document.getElementById('location-info').textContent = trafficUpdate;
+                            } else {
+                                document.getElementById('location-info').textContent = 'Unable to retrieve location name.';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching location data:', error);
+                            document.getElementById('location-info').textContent = 'Unable to retrieve location information.';
+                        });
+                }, function(error) {
+                    document.getElementById('location-info').textContent = 'Unable to retrieve your location.';
+                });
+            } else {
+                document.getElementById('location-info').textContent = 'Geolocation is not supported by this browser.';
+            }
+        });
+
+        // Load voices and update when available
+        window.speechSynthesis.onvoiceschanged = function() {
+            const voices = window.speechSynthesis.getVoices();
+            console.log('Available voices:', voices); // For debugging
+        };
+    </script>
+</body>
+</html>

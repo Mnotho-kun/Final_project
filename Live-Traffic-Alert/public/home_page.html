@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Home Page</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <img src="Logo.png" alt="Logo" class="logo">
+                <li><a href="/home-page">Home</a></li>
+                <li><a href="/about-us">About Us</a></li>
+                <li><a href="/contact-us">Contact Us</a></li>
+                <li><a href="/destination">Destination</a></li>
+                <li><a href="/current-traffic">Current Traffic</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="main-section">
+        <img src="Traffic_image.jpg" alt="Traffic" class="traffic-image">
+        <div class="buttons">
+            <button class="destination-btn" onclick="window.location.href='/destination';">Destination</button>
+            <button class="current-traffic-btn" onclick="window.location.href='/current-traffic';">Current Traffic</button>
+        </div>
+    </section>
+
+    <footer>
+        Available on:
+        <a href="#"><img src="google-play-badge.webp" alt="Google Play" class="store-badge"></a>
+        <a href="#"><img src="App-Store-badge.png" alt="App Store" class="store-badge"></a>
+    </footer>
+    <script src="script.js"></script>
+</body>
+</html>

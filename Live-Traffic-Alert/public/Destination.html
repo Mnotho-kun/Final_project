@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Destination Page</title>
+    <style>
+        #map {
+            height: 500px; /* Adjust the height as needed */
+            width: 100%; /* Full width */
+            margin-top: 20px; /* Space above the map */
+            border: 2px solid red;
+            background-color: #ff0303;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <img src="Logo.png" alt="Logo" class="logo">
+                <li><a href="/home-page">Home</a></li>
+                <li><a href="/about-us">About Us</a></li>
+                <li><a href="/contact-us">Contact Us</a></li>
+                <li><a href="/destination">Destination</a></li>
+                <li><a href="/current-traffic">Current Traffic</a></li>
+            </ul>
+        </nav>
+    </header>
+
+       <div class="main-content">
+        <section class="destination-section">
+            <h1>Enter Your Route</h1>
+            <form id="destination-form">
+                <div class="input-container">
+                    <label for="current-location-input" class="icon-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M480-480q33 0 56.5-23.5T560-560q0-33-23.5-56.5T480-640q-33 0-56.5 23.5T400-560q0 33 23.5 56.5T480-480Zm0 400Q319-217 239.5-334.5T160-552q0-150 96.5-239T480-880q127 0 223.5 89T800-552q0 100-79.5 217.5T480-80Z"/></svg>
+                    </label>
+                    <input type="text" placeholder="Current Location" name="current-location" id="current-location-input" required>
+                </div>
+                <div class="input-container">
+                    <label for="destination-input" class="icon-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M480-480q33 0 56.5-23.5T560-560q0-33-23.5-56.5T480-640q-33 0-56.5 23.5T400-560q0 33 23.5 56.5T480-480Zm0 400Q319-217 239.5-334.5T160-552q0-150 96.5-239T480-880q127 0 223.5 89T800-552q0 100-79.5 217.5T480-80Z"/></svg>
+                    </label>
+                    <input type="text" placeholder="Destination" name="destination" id="destination-input" required>
+                </div>
+                <button type="submit">Submit</button>
+                <button type="button" id="locate-me">Locate Me</button>
+            </form>
+
+            <div class="button-container hidden" id="additional-buttons">
+                <button id="find-route">Find Less Traffic Route</button>
+                <button id="return-to-home">Return to Home</button>
+            </div>
+        </section>
+
+        <!-- Map container -->
+        <div id="map"></div>
+    </div>
+
+    <footer>
+        <p>Available on:</p>
+        <div class="store-badges">
+            <a href="#"><img src="google-play-badge.webp" alt="Google Play" class="store-badge"></a>
+            <a href="#"><img src="App-Store-badge.png" alt="App Store" class="store-badge"></a>
+        </div>
+    </footer>
+
+    <!-- Load Google Maps JavaScript API with async and defer -->
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap&libraries=places&v=beta">
+</script>
+<script>
+    let map;
+    let directionsService;
+    let directionsRenderer;
+
+    async function initMap() {
+        try {
+            const { Map } = await google.maps.importLibrary("maps");
+            const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
+
+            map = new google.maps.Map(document.getElementById("map"), {
+    zoom: 10, // Experiment with different zoom levels
+    center: { lat: 40.7128, lng: -74.0060 } // Example: New York City as the default center
+});
+
+            directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer();
+            directionsRenderer.setMap(map);
+
+            console.log("Map initialized");
+        } catch (error) {
+            console.error("Error initializing map:", error);
+        }
+    }
+
+    function geocodeAddress(address) {
+        return fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length > 0) {
+                    const location = data[0];
+                    return {
+                        lat: parseFloat(location.lat),
+                        lng: parseFloat(location.lon)
+                    };
+                } else {
+                    alert('Address not found');
+                    return null;
+                }
+            })
+            .catch(error => console.error('Error geocoding address:', error));
+    }
+
+    function calculateAndDisplayRoute(start, end) {
+        directionsService.route({
+            origin: start,
+            destination: end,
+            travelMode: google.maps.TravelMode.DRIVING
+        }, (response, status) => {
+            if (status === google.maps.DirectionsStatus.OK) {
+                directionsRenderer.setDirections(response);
+            } else {
+                window.alert('Directions request failed due to ' + status);
+            }
+        });
+    }
+
+    function handleLocationError(browserHasGeolocation, infoWindow, pos) {
+        alert(browserHasGeolocation ? "Error: The Geolocation service failed." : "Error: Your browser doesn't support geolocation.");
+    }
+
+    function locateUser() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                const pos = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+
+                map.setCenter(pos);
+                map.setZoom(13);
+            }, () => {
+                handleLocationError(true, null, null);
+            });
+        } else {
+            handleLocationError(false, null, null);
+        }
+    }
+
+    document.getElementById('destination-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const currentLocation = document.getElementById('current-location-input').value;
+        const destination = document.getElementById('destination-input').value;
+        Promise.all([
+            geocodeAddress(currentLocation),
+            geocodeAddress(destination)
+        ]).then(([currentLocationCoords, destinationCoords]) => {
+            if (currentLocationCoords && destinationCoords) {
+                map.setCenter(currentLocationCoords);
+                map.setZoom(13);
+                calculateAndDisplayRoute(currentLocationCoords, destinationCoords);
+                document.getElementById('additional-buttons').classList.remove('hidden');
+            }
+        });
+    });
+
+    document.getElementById('locate-me').addEventListener('click', locateUser);
+
+    // Highlighted Change: Added feature to show an alternative route in pink color
+    document.getElementById('find-route').addEventListener('click', function() {
+        const currentLocation = document.getElementById('current-location-input').value;
+        const destination = document.getElementById('destination-input').value;
+
+        Promise.all([
+            geocodeAddress(currentLocation),
+            geocodeAddress(destination)
+        ]).then(([currentLocationCoords, destinationCoords]) => {
+            if (currentLocationCoords && destinationCoords) {
+                const request = {
+                    origin: currentLocationCoords,
+                    destination: destinationCoords,
+                    provideRouteAlternatives: true, // Request alternative routes
+                    travelMode: google.maps.TravelMode.DRIVING
+                };
+
+                directionsService.route(request, (response, status) => {
+                    if (status === google.maps.DirectionsStatus.OK) {
+                        // Highlighted Change: Displaying alternative route in pink
+                        const alternativeRoute = response.routes[1]; // Check if an alternative route exists
+                        if (alternativeRoute) {
+                            const altDirectionsRenderer = new google.maps.DirectionsRenderer({
+                                map: map,
+                                directions: response,
+                                routeIndex: 1, // Show the second route (alternative)
+                                polylineOptions: {
+                                    strokeColor: 'pink', // Set the route color to pink
+                                    strokeWeight: 5
+                                }
+                            });
+
+                            // Optional: add voice feedback
+                            const synth = window.speechSynthesis;
+                            const utterance = new SpeechSynthesisUtterance('Here is an alternative route.');
+                            synth.speak(utterance);
+                        } else {
+                            alert('No alternative route found.');
+                        }
+                    } else {
+                        window.alert('Directions request failed due to ' + status);
+                    }
+                });
+            }
+        });
+    });
+
+    document.getElementById('return-to-home').addEventListener('click', function() {
+        window.location.href = "/home-page";
+    });
+</script>
+</body>
+</html>
